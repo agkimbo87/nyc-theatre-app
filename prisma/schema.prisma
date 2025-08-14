@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ShowType {
+  BROADWAY
+  OFF_BROADWAY
+}
+
+enum ShowStatus {
+  OPEN
+  PREVIEWS
+  CLOSED
+}
+
+model Show {
+  id           String       @id @default(cuid())
+  title        String
+  slug         String       @unique
+  type         ShowType
+  summary      String
+  openingDate  DateTime?
+  closingDate  DateTime?
+  runtimeMin   Int?
+  ageGuidance  String?
+  status       ShowStatus   @default(OPEN)
+  heroImage    String?
+  officialSite String?
+
+  venues        ShowVenue[]
+  categories    ShowCategory[]
+  ticketLinks   TicketLink[]
+  tips          SavingTip[]
+  sources       Source[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Venue {
+  id           String   @id @default(cuid())
+  name         String
+  address      String?
+  neighborhood String?
+  capacity     Int?
+  latitude     Float?
+  longitude    Float?
+  website      String?
+
+  shows ShowVenue[]
+}
+
+model ShowVenue {
+  id        String  @id @default(cuid())
+  show      Show    @relation(fields: [showId], references: [id])
+  showId    String
+  venue     Venue   @relation(fields: [venueId], references: [id])
+  venueId   String
+  startDate DateTime?
+  endDate   DateTime?
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  shows ShowCategory[]
+}
+
+model ShowCategory {
+  show       Show     @relation(fields: [showId], references: [id])
+  showId     String
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  @@id([showId, categoryId])
+}
+
+model TicketLink {
+  id            String @id @default(cuid())
+  show          Show   @relation(fields: [showId], references: [id])
+  showId        String
+  vendor        String
+  url           String
+  affiliateCode String?
+  notes         String?
+}
+
+model SavingTip {
+  id          String  @id @default(cuid())
+  show        Show?   @relation(fields: [showId], references: [id])
+  showId      String?
+  tipType     String
+  description String
+  howTo       String?
+  eligibility String?
+  link        String?
+}
+
+model Source {
+  id           String  @id @default(cuid())
+  show         Show    @relation(fields: [showId], references: [id])
+  showId       String
+  sourceName   String
+  url          String
+  lastCheckedAt DateTime?
+}
